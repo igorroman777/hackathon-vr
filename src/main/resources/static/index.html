@@ -15,6 +15,26 @@
 
     AFRAME.registerComponent('modify-chess-figure', {
       init: function () {
+
+        // inside an a-frame component
+        var acamera = document.querySelector("#a-camera")
+        var direction = new THREE.Vector3();
+
+        // move forward in camera direction for mouse scroll wheel
+        window.addEventListener("wheel", event => {
+            const delta = Math.sign(event.wheelDelta);
+            // getting the mouse wheel change (120 or -120 and normalizing it to 1 or -1)
+
+            // get the cameras world direction
+            this.el.sceneEl.camera.getWorldDirection(direction);
+            direction.multiplyScalar(0.1);
+
+            var pos = acamera.object3D.position;
+            pos.x += delta * direction.x;
+            // pos.y += delta * direction.y // comment this to get 2D movement
+            pos.z += delta * direction.z;
+        });
+
         this.el.addEventListener('click', function (evt) {
           // this.setAttribute('material', 'color', '#FFF');
           var vectorChessFig = this.getAttribute('position');
@@ -44,7 +64,7 @@
     <a-entity gltf-model="#chessModel" position="1 -5 -20"></a-entity>
     <a-box modify-chess-figure position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9" shadow></a-box>
 
-    <a-entity camera look-controls cursor="rayOrigin: mouse">
+    <a-entity camera id="a-camera" look-controls cursor="rayOrigin: mouse">
       <!-- <a-entity cursor="fuse: true; fuseTimeout: 500" position="0 0 -1"
         geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03;" material="color: black">
       </a-entity> -->
