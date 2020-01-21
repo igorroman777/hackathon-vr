@@ -7,11 +7,35 @@
   <meta name="description" content="Hello, WebVR! • A-Frame">
   <script src="https://aframe.io/releases/1.0.2/aframe.min.js"></script>
   <script src="https://unpkg.com/aframe-slice9-component/dist/aframe-slice9-component.min.js"></script>
-  <!-- <script src="https://rawgit.com/mayognaise/aframe-mouse-cursor-component/master/dist/aframe-mouse-cursor-component.min.js"></script> -->
   <script src="https://unpkg.com/aframe-look-at-component@0.8.x/dist/aframe-look-at-component.min.js"></script>
 
 
   <script>
+
+    function getCollisionChecker(direction) {
+      var collisionChecker = document.createElement('a-entity');
+      collisionChecker.object3D.position.set(5.7, -1, -4);
+
+      switch (direction) {
+        default:
+        case 'center':
+          collisionChecker.setAttribute('center-checker', '')
+          collisionChecker.setAttribute('raycaster', { far: 2 });
+          break;
+        case 'left':
+          collisionChecker.setAttribute('front-left-checker', '')
+          collisionChecker.setAttribute('raycaster', { far: 3 });
+          collisionChecker.setAttribute('rotation', { x: 0, y: 45, z: 0 });
+          break;
+        case 'right':
+          collisionChecker.setAttribute('front-right-checker', '')
+          collisionChecker.setAttribute('raycaster', { far: 3 });
+          collisionChecker.setAttribute('rotation', { x: 0, y: -45, z: 0 });
+          break;
+      }
+
+      return collisionChecker;
+    }
 
     AFRAME.registerComponent('chess-board', {
       init: function () {
@@ -42,10 +66,11 @@
           var figure = document.createElement('a-entity');
           figure.setAttribute('id', 'pawn' + index);
           figure.object3D.position.set(-11.5 + index * 1.65, 0, 8);
-          figure.setAttribute('material', { color: 'red' });
           figure.setAttribute('gltf-model', '#pawn');
           figure.setAttribute('modify-chess-figure', '');
           figure.setAttribute('shadow', { cast: true, receive: true })
+          figure.classList.toggle('clickable');
+          figure.setAttribute('collider-check', '')
 
           var overlay = document.createElement('a-entity');
           figure.appendChild(overlay);
@@ -58,6 +83,20 @@
           overlay.setAttribute('visible', 'false');
           overlay.setAttribute('mixin', 'slice');
 
+          var arrow = document.createElement('a-plane');
+          overlay.appendChild(arrow);
+          arrow.setAttribute('src', '#arrowImg');
+          arrow.object3D.position.set(1.5, 0.75, 0.01)
+
+          var rightCollisionChecker = getCollisionChecker('right')
+          figure.appendChild(rightCollisionChecker);
+
+          var leftCollisionChecker = getCollisionChecker('left')
+          figure.appendChild(leftCollisionChecker);
+
+          var centerCollisionChecker = getCollisionChecker('center')
+          figure.appendChild(centerCollisionChecker);
+
           figure.addEventListener('click', function (evt) {
             var figureOverlay = document.querySelector('#pawn-overlay' + index);
             var isVisible = figureOverlay.object3D.visible;
@@ -68,22 +107,32 @@
             }
 
             figureOverlay.object3D.visible = !isVisible;
+            figureOverlay.classList.toggle('clickable');
+            figureOverlay.firstChild.classList.toggle('clickable');
           });
 
           overlay.addEventListener('click', function (evt) {
             evt.stopPropagation();
           });
 
+          arrow.addEventListener('click', function (evt) {
+            evt.stopPropagation();
+            var figure = evt.srcElement.parentElement.parentElement;
+            var currentPosition = figure.object3D.position;
+            figure.object3D.position.set(currentPosition.x, currentPosition.y, currentPosition.z - 1.65);
+          });
+
           chessboard.appendChild(figure);
-
-
-          // this.el.addEventListener('click', function (evt) {
-          //   // this.setAttribute('material', 'color', '#FFF');
-          //   var vectorChessFig = this.getAttribute('position');
-
-          //   this.setAttribute('position', { x: vectorChessFig.x + 4, y: vectorChessFig.y, z: vectorChessFig.z });
-          // });
         }
+      }
+    });
+
+    AFRAME.registerComponent('collider-check', {
+      dependencies: ['raycaster'],
+      init: function () {
+        this.el.addEventListener('raycaster-intersection', function (evt) {
+          console.log(evt.srcElement.parentElement.id + ' can beat something!');
+        });
       }
     });
   </script>
@@ -93,14 +142,15 @@
   <a-scene>
     <a-assets>
       <img id="sliceImg" src="/assets/img/slice.png">
+      <img id="arrowImg" src="/assets/img/white_arrow.svg">
       <a-mixin id="slice" slice9="color: #050505; src: #sliceImg; left: 50; right: 52; top: 50; bottom: 52;"></a-mixin>
       <a-asset-item id="chess-board-model" src="/assets/models/chess-board.glb"></a-asset-item>
       <a-asset-item id="pawn" src="/assets/models/fig_bauer-w.glb"></a-asset-item>
     </a-assets>
     <a-entity chess-board gltf-model="#chess-board-model"></a-entity>
 
-    <a-entity id="rig" wasd-controls  position="0 7.8 10" rotation="-40 0 0">
-      <a-entity camera look-controls id="a-camera" cursor="rayOrigin: mouse" />
+    <a-entity id="rig" wasd-controls position="0 7.8 10" rotation="-40 0 0">
+      <a-entity camera look-controls id="a-camera" raycaster="objects: .clickable" cursor="rayOrigin: mouse" />
     </a-entity>
 
   </a-scene>
