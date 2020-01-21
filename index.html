@@ -10,6 +10,9 @@
   <!-- <script src="https://rawgit.com/mayognaise/aframe-mouse-cursor-component/master/dist/aframe-mouse-cursor-component.min.js"></script> -->
   <script src="https://unpkg.com/aframe-look-at-component@0.8.x/dist/aframe-look-at-component.min.js"></script>
 
+  <script src="https://cdn.rawgit.com/delapuente/aframe-sharedspace-component/master/dist/aframe-sharedspace-component.min.js"></script>
+  <script src="https://rawgit.com/feiss/aframe-environment-component/master/dist/aframe-environment-component.min.js"></script>
+
 
   <script>
 
@@ -57,11 +60,11 @@
 <body>
   <a-scene>
     <a-assets>
-      <img id="sliceImg" src="/src/main/recources/static/assets/img/slice.png">
+      <img id="sliceImg" src="/src/main/resources/static/assets/img/slice.png">
       <a-mixin id="slice" slice9="color: #050505; src: #sliceImg; left: 50; right: 52; top: 50; bottom: 52;"></a-mixin>
-      <a-asset-item id="chessModel" src="/src/main/recources/static/assets/archive/4.88_chess_scene.gltf"></a-asset-item>
+      <a-asset-item id="chessModel" src="/src/main/resources/static/assets/archive/4.88_chess_scene.gltf"></a-asset-item>
     </a-assets>
-    <a-entity gltf-model="#chessModel" position="1 -5 -20"></a-entity>
+    <a-entity gltf-model="#chessModel" position="1 -5 -20" sharedspace avatars></a-entity>
     <a-box modify-chess-figure position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9" shadow></a-box>
 
     <a-entity camera id="a-camera" look-controls cursor="rayOrigin: mouse">
