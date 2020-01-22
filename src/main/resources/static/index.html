@@ -8,6 +8,8 @@
   <script src="https://aframe.io/releases/1.0.2/aframe.min.js"></script>
   <script src="https://unpkg.com/aframe-slice9-component/dist/aframe-slice9-component.min.js"></script>
   <script src="https://unpkg.com/aframe-look-at-component@0.8.x/dist/aframe-look-at-component.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.slim.js"></script>
+  <script src="https://unpkg.com/networked-aframe/dist/networked-aframe.min.js"></script>
 
 
   <script>
@@ -139,7 +141,7 @@
 </head>
 
 <body>
-  <a-scene>
+  <a-scene networked-scene="app: myApp; room: room1; debug: true">
     <a-assets>
       <img id="sliceImg" src="/assets/img/slice.png">
       <img id="arrowImg" src="/assets/img/white_arrow.svg">
