@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>bdr Hackathon VR/AR Application</title>
+  <meta name="description" content="Hello, WebVR! • A-Frame">
+  <script src="https://aframe.io/releases/1.0.2/aframe.min.js"></script>
+  <script src="https://unpkg.com/aframe-slice9-component/dist/aframe-slice9-component.min.js"></script>
+  <script src="https://unpkg.com/aframe-look-at-component@0.8.x/dist/aframe-look-at-component.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.slim.js"></script>
+  <script src="https://unpkg.com/networked-aframe/dist/networked-aframe.min.js"></script>
+
+  <script src="https://rawgit.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
+  <script src="https://jeromeetienne.github.io/AR.js/aframe/build/aframe-ar.js"></script>
+  <script>
+
+    function getCollisionChecker(direction) {
+      var collisionChecker = document.createElement('a-entity');
+      collisionChecker.object3D.position.set(5.7, -1, -4);
+
+      switch (direction) {
+        default:
+        case 'center':
+          collisionChecker.setAttribute('center-checker', '')
+          collisionChecker.setAttribute('raycaster', { far: 2 });
+          break;
+        case 'left':
+          collisionChecker.setAttribute('front-left-checker', '')
+          collisionChecker.setAttribute('raycaster', { far: 3 });
+          collisionChecker.setAttribute('rotation', { x: 0, y: 45, z: 0 });
+          break;
+        case 'right':
+          collisionChecker.setAttribute('front-right-checker', '')
+          collisionChecker.setAttribute('raycaster', { far: 3 });
+          collisionChecker.setAttribute('rotation', { x: 0, y: -45, z: 0 });
+          break;
+      }
+
+      return collisionChecker;
+    }
+
+    AFRAME.registerComponent('markerhandler', {
+
+      init: function() {
+        const animatedMarker = document.querySelector("#animated-marker");
+        // const aEntity = document.querySelector("#animated-model");
+
+        // inside an a-frame component
+        var acamera = document.querySelector("#a-camera")
+        var scene = document.querySelector('a-scene');
+        var chessboard = document.querySelector('[chess-board]');
+        var direction = new THREE.Vector3();
+
+        // every click, we make our model grow in size :)
+        animatedMarker.addEventListener('click', function(ev, target){
+            const intersectedElement = ev && ev.detail && ev.detail.intersectedEl;
+            if (chessboard && intersectedElement === chessboard) {
+                const scale = aEntity.getAttribute('scale');
+                Object.keys(scale).forEach((key) => scale[key] = scale[key] + 1);
+                chessboard.setAttribute('scale', scale);
+            }
+        });
+
+
+
+        // move forward in camera direction for mouse scroll wheel
+        window.addEventListener("wheel", event => {
+          const delta = Math.sign(event.wheelDelta) * 3;
+          // getting the mouse wheel change (120 or -120 and normalizing it to 1 or -1)
+
+          // get the cameras world direction
+          this.el.sceneEl.camera.getWorldDirection(direction);
+          direction.multiplyScalar(0.1);
+
+          var pos = acamera.object3D.position;
+          pos.x += delta * direction.x;
+          pos.y += delta * direction.y
+          pos.z += delta * direction.z;
+        });
+
+
+        for (let index = 0; index < 8; index++) {
+          var figure = document.createElement('a-entity');
+          figure.setAttribute('id', 'pawn' + index);
+          figure.object3D.position.set(-11.5 + index * 1.65, 0, 8);
+          figure.setAttribute('gltf-model', '#pawn');
+          figure.setAttribute('modify-chess-figure', '');
+          figure.setAttribute('shadow', { cast: true, receive: true })
+          figure.classList.toggle('clickable');
+          figure.setAttribute('collider-check', '')
+
+          var overlay = document.createElement('a-entity');
+          figure.appendChild(overlay);
+          overlay.setAttribute('id', 'pawn-overlay' + index);
+          overlay.setAttribute('overlay', '');
+          overlay.object3D.position.set(6, 4, -4);
+          overlay.setAttribute('text', 'color: #4ef580; width: 6; x-offset: 1; value: The eggs have been found!\nExplore the OASIS!;');
+          overlay.setAttribute('slice9', { color: '#111', width: 5, height: 3 });
+          overlay.setAttribute('look-at', '[camera]');
+          overlay.setAttribute('visible', 'false');
+          overlay.setAttribute('mixin', 'slice');
+
+          var arrow = document.createElement('a-plane');
+          overlay.appendChild(arrow);
+          arrow.setAttribute('src', '#arrowImg');
+          arrow.object3D.position.set(1.5, 0.75, 0.01)
+
+          var rightCollisionChecker = getCollisionChecker('right')
+          figure.appendChild(rightCollisionChecker);
+
+          var leftCollisionChecker = getCollisionChecker('left')
+          figure.appendChild(leftCollisionChecker);
+
+          var centerCollisionChecker = getCollisionChecker('center')
+          figure.appendChild(centerCollisionChecker);
+
+          figure.addEventListener('click', function (evt) {
+            var figureOverlay = document.querySelector('#pawn-overlay' + index);
+            var isVisible = figureOverlay.object3D.visible;
+
+            var allOverlays = scene.querySelectorAll('[overlay]');
+            for (var i = 0; i < allOverlays.length; i++) {
+              allOverlays[i].object3D.visible = false;
+            }
+
+            figureOverlay.object3D.visible = !isVisible;
+            figureOverlay.classList.toggle('clickable');
+            figureOverlay.firstChild.classList.toggle('clickable');
+          });
+
+          overlay.addEventListener('click', function (evt) {
+            evt.stopPropagation();
+          });
+
+          arrow.addEventListener('click', function (evt) {
+            evt.stopPropagation();
+            var figure = evt.srcElement.parentElement.parentElement;
+            var currentPosition = figure.object3D.position;
+            figure.object3D.position.set(currentPosition.x, currentPosition.y, currentPosition.z - 1.65);
+          });
+
+          chessboard.appendChild(figure);
+        }
+      }
+    });
+
+    AFRAME.registerComponent('collider-check', {
+      dependencies: ['raycaster'],
+      init: function () {
+        this.el.addEventListener('raycaster-intersection', function (evt) {
+          console.log(evt.srcElement.parentElement.id + ' can beat something!');
+        });
+      }
+    });
+  </script>
+</head>
+
+<body style='margin : 0px; overflow: hidden;'>
+  <!-- <a-scene networked-scene="app: myApp; room: room1; debug: true" embedded arjs> -->
+  <a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'>
+    <a-assets>
+      <img id="sliceImg" src="/assets/img/slice.png">
+      <img id="arrowImg" src="/assets/img/white_arrow.svg">
+      <a-mixin id="slice" slice9="color: #050505; src: #sliceImg; left: 50; right: 52; top: 50; bottom: 52;"></a-mixin>
+      <a-asset-item id="chess-board-model" src="/assets/models/chess-board.glb"></a-asset-item>
+      <a-asset-item id="pawn" src="/assets/models/fig_bauer-w.glb"></a-asset-item>
+    </a-assets>
+    <!-- <a-entity chess-board gltf-model="#chess-board-model"></a-entity> -->
+
+    <a-marker markerhandler emitevents="true" cursor="rayOrigin: mouse" id="animated-marker" preset='hiro'></a-marker>
+      <a-entity chess-board gltf-model="#chess-board-model">
+      </a-entity>
+    </a-marker>
+
+    <a-entity id="rig" wasd-controls position="0 7.8 10" rotation="-40 0 0">
+      <a-entity camera look-controls id="a-camera" raycaster="objects: .clickable" cursor="rayOrigin: mouse" />
+    </a-entity>
+
+  </a-scene>
+</body>
+
+</html>
