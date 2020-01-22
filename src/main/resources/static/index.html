@@ -5,15 +5,15 @@
   <meta charset="utf-8">
   <title>bdr Hackathon VR/AR Application</title>
   <meta name="description" content="Hello, WebVR! • A-Frame">
-  <script src="https://aframe.io/releases/1.0.2/aframe.min.js"></script>
+  <script src="https://aframe.io/releases/1.0.3/aframe.min.js"></script>
   <script src="https://unpkg.com/aframe-slice9-component/dist/aframe-slice9-component.min.js"></script>
   <script src="https://unpkg.com/aframe-look-at-component@0.8.x/dist/aframe-look-at-component.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.slim.js"></script>
+  <script src="https://unpkg.com/aframe-randomizer-components@^3.0.1/dist/aframe-randomizer-components.min.js"></script>
   <script src="https://unpkg.com/networked-aframe/dist/networked-aframe.min.js"></script>
-
+  <script src="https://rawgit.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
 
   <script>
-
     function getCollisionChecker(direction) {
       var collisionChecker = document.createElement('a-entity');
       collisionChecker.object3D.position.set(5.7, -1, -4);
@@ -67,22 +67,16 @@
         for (let index = 0; index < 8; index++) {
           var figure = document.createElement('a-entity');
           figure.setAttribute('id', 'pawn' + index);
+          figure.setAttribute('networked', 'template: #figure-template');
           figure.object3D.position.set(-11.5 + index * 1.65, 0, 8);
-          figure.setAttribute('gltf-model', '#pawn');
-          figure.setAttribute('modify-chess-figure', '');
-          figure.setAttribute('shadow', { cast: true, receive: true })
-          figure.classList.toggle('clickable');
-          figure.setAttribute('collider-check', '')
 
           var overlay = document.createElement('a-entity');
           figure.appendChild(overlay);
           overlay.setAttribute('id', 'pawn-overlay' + index);
-          overlay.setAttribute('overlay', '');
+          overlay.setAttribute('networked', 'template: #overlay-template');
           overlay.object3D.position.set(6, 4, -4);
-          overlay.setAttribute('text', 'color: #4ef580; width: 6; x-offset: 1; value: The eggs have been found!\nExplore the OASIS!;');
+          overlay.setAttribute('text', 'color: #4ef580; width: 6; x-offset: 1; value: This is pawn ' + (index + 1) + ';');
           overlay.setAttribute('slice9', { color: '#111', width: 5, height: 3 });
-          overlay.setAttribute('look-at', '[camera]');
-          overlay.setAttribute('visible', 'false');
           overlay.setAttribute('mixin', 'slice');
 
           var arrow = document.createElement('a-plane');
@@ -90,14 +84,14 @@
           arrow.setAttribute('src', '#arrowImg');
           arrow.object3D.position.set(1.5, 0.75, 0.01)
 
-          var rightCollisionChecker = getCollisionChecker('right')
-          figure.appendChild(rightCollisionChecker);
+          // var rightCollisionChecker = getCollisionChecker('right')
+          // figure.appendChild(rightCollisionChecker);
 
-          var leftCollisionChecker = getCollisionChecker('left')
-          figure.appendChild(leftCollisionChecker);
+          // var leftCollisionChecker = getCollisionChecker('left')
+          // figure.appendChild(leftCollisionChecker);
 
-          var centerCollisionChecker = getCollisionChecker('center')
-          figure.appendChild(centerCollisionChecker);
+          // var centerCollisionChecker = getCollisionChecker('center')
+          // figure.appendChild(centerCollisionChecker);
 
           figure.addEventListener('click', function (evt) {
             var figureOverlay = document.querySelector('#pawn-overlay' + index);
@@ -148,14 +142,65 @@
       <a-mixin id="slice" slice9="color: #050505; src: #sliceImg; left: 50; right: 52; top: 50; bottom: 52;"></a-mixin>
       <a-asset-item id="chess-board-model" src="/assets/models/chess-board.glb"></a-asset-item>
       <a-asset-item id="pawn" src="/assets/models/fig_bauer-w.glb"></a-asset-item>
+
+      <!-- Avatar -->
+      <template id="avatar-template">
+        <a-entity class="avatar">
+          <a-sphere class="head" color="#ffffff" scale="0.45 0.5 0.4"></a-sphere>
+          <a-entity class="face" position="0 0.05 0">
+            <a-sphere class="eye" color="#efefef" position="0.16 0.1 -0.35" scale="0.12 0.12 0.12">
+              <a-sphere class="pupil" color="#000" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
+            </a-sphere>
+            <a-sphere class="eye" color="#efefef" position="-0.16 0.1 -0.35" scale="0.12 0.12 0.12">
+              <a-sphere class="pupil" color="#000" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
+            </a-sphere>
+          </a-entity>
+        </a-entity>
+      </template>
+
+      <!-- Figure -->
+      <template id="figure-template">
+        <a-entity modify-chess-figure collider-check gltf-model="#pawn" shadow class="clickable">
+      </template>
+
+      <template id="overlay-template">
+        <a-entity overlay look-at='[camera]' visible='false' />
+      </template>
+
     </a-assets>
+
     <a-entity chess-board gltf-model="#chess-board-model"></a-entity>
 
-    <a-entity id="rig" wasd-controls position="0 7.8 10" rotation="-40 0 0">
-      <a-entity camera look-controls id="a-camera" raycaster="objects: .clickable" cursor="rayOrigin: mouse" />
+    <a-entity id="a-camera" networked="template:#avatar-template;attachTemplateToLocal:false;" camera
+      position="0 7.8 10" rotation="-40 0 0" look-controls raycaster="objects: .clickable" cursor="rayOrigin: mouse">
+      <a-sphere class="head" visible="false" random-color></a-sphere>
     </a-entity>
 
   </a-scene>
+
+  <script>
+    // Define custom schema for syncing avatar color, set by random-color
+    NAF.schemas.add({
+      template: '#avatar-template',
+      components: [
+        'position',
+        'rotation',
+        {
+          selector: '.head',
+          component: 'material',
+          property: 'color'
+        }
+      ]
+    });
+
+    NAF.schemas.add({
+      template: '#overlay-template',
+      components: [
+        'visible'
+      ]
+    });
+
+  </script>
 </body>
 
 </html>

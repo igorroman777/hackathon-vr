@@ -1,7 +1,13 @@
 // Load required modules
-const http = require("http"); // http server core module
 const path = require("path");
+const https = require('https'); // http server core module
+const fs = require('fs');
 const express = require("express"); // web framework external module
+
+const options = {
+  key: fs.readFileSync('key.pem'),
+  cert: fs.readFileSync('cert.pem')
+};
 
 // Set process name
 process.title = "networked-aframe-server";
@@ -27,7 +33,7 @@ if (process.env.NODE_ENV === "development") {
 }
 
 // Start Express http server
-const webServer = http.createServer(app);
+const webServer = https.createServer(options, app);
 const io = require("socket.io")(webServer);
 
 const rooms = {};
@@ -85,5 +91,5 @@ io.on("connection", socket => {
 });
 
 webServer.listen(port, () => {
-  console.log("listening on http://localhost:" + port);
+  console.log("listening on https://localhost:" + port);
 });
