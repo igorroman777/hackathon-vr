@@ -1,0 +1,12 @@
+{
+  "name": "bdr-hackathon",
+  "version": "1.0.0",
+  "description": "Multi-user virtual reality",
+  "scripts": {
+    "start": "node ./server/index.js"
+  },
+  "author": "hackathon",
+  "dependencies": {
+    "networked-aframe": "^0.7.0"
+  }
+}
