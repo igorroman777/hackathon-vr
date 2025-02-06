@@ -11,9 +11,7 @@
 AFRAME.registerComponent('do-something', {
   init: function () {
     var sceneEl = this.el;
-
     var scene = document.querySelector('a-scene');
-      
   (function start() {
     if (!scene.hasLoaded) {
       scene.addEventListener('loaded', start);
@@ -32,7 +30,6 @@ AFRAME.registerComponent('do-something', {
     }
             
     var room = document.querySelector('[sharedspace]');
-
     room.addEventListener('avataradded', function onAdded(evt) {
   
       var avatar = evt.detail.avatar;
